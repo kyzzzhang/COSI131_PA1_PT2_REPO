@@ -35,7 +35,7 @@ public class RedirectFilter extends ConcurrentFilter {
 			String line = input.peek();
 			//System.out.println(line);
 			if(line!=null && !line.equals("COMPLETED")) {
-				System.out.println(line);
+				//System.out.println(line);
 				
 				processLine(input.poll());
 				

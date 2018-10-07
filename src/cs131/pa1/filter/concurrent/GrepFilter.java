@@ -17,7 +17,7 @@ public class GrepFilter extends ConcurrentFilter {
 	}
 	
 	public String processLine(String line) {
-		if(line.contains(toFind)) {
+		if(line !=null && line.contains(toFind)) {
 			return line;
 		} else {
 			return null;
