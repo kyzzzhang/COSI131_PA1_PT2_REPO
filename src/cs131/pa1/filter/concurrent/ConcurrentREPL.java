@@ -24,65 +24,80 @@ public class ConcurrentREPL {
 			} else if (command.trim().equals("repl_jobs")) {
 				int number = 1;
 				for (Thread t: threads) {
-					if (t.isAlive()) {
-						System.out.println(number + ". " + t.getName() + " & ");
-						number++;
+					if (!t.isInterrupted() && t.isAlive()) {
+						System.out.println("	" + number + ". " + t.getName() + "&");
+					}
+					number++;
+				}
+			} else {
+				String[] commandList = command.split("\\s+");
+				boolean containKillCommand = false;
+				int killAtIndex=-1;
+				for(int i = 0; i<commandList.length;i++){
+					if(commandList[i].equals("kill")){
+						containKillCommand = true;
+						killAtIndex = i;
 					}
 				}
-			} else if (command.contains("kill")) {
-				String[] killList = command.split("\\s+");
-				if(killList.length == 1) {
-					System.out.printf(Message.REQUIRES_PARAMETER.toString(), command);
-				} else if (killList.length>1) {
-					int killNumber = 0;
-					try {
-						killNumber = Integer.parseInt(killList[1]);
-					} catch (NumberFormatException e) {
-						System.out.printf(Message.INVALID_PARAMETER.toString(), command);
-					}
-					if(killNumber !=0 ) {
-						if((killNumber)>threads.size()) {
-							System.out.printf(Message.INVALID_PARAMETER.toString(), command);
-						} else {
-							if (threads.get(killNumber-1).isAlive()) {
-								threads.get(killNumber-1).interrupt();
+				if(containKillCommand){
+					if(killAtIndex+1>=commandList.length){
+						System.out.printf(Message.REQUIRES_PARAMETER.toString(), "kill");
+					} else {
+						int killNumber = 0;
+						try {
+							killNumber = Integer.parseInt(commandList[killAtIndex+1]);
+						} catch (NumberFormatException e) {
+							System.out.printf(Message.INVALID_PARAMETER.toString(), "kill "+commandList[killAtIndex+1]);
+						}
+						if(killNumber !=0 ) {
+							if((killNumber)>threads.size()) {
+								System.out.printf(Message.INVALID_PARAMETER.toString(), "kill "+commandList[killAtIndex+1]);
+							} else {
+								int killed = killNumber-1;
+								if (threads.get(killed).isAlive()) {
+									threads.get(killed).interrupt();
+								}
 							}
 						}
-					}
-				}
-			} else if(!command.trim().equals("")) {
-				//building the filters list from the command
-				String[] commandList = command.split("\\s+");
-				String symbol = commandList[commandList.length-1];
-				boolean backgroundMode = false;
-				if (symbol.equals("&")) {
-					backgroundMode = true;
-					int symbolIndex = command.indexOf(symbol);
-					command = command.substring(0, symbolIndex);
-				}
-				ConcurrentFilter filterlist = ConcurrentCommandBuilder.createFiltersFromCommand(command);
-				//System.out.println(filterlist.toString());
-				Thread last = Thread.currentThread();
-				while (filterlist != null) {
-//					System.out.println("enter");
-					Thread nextFilter = new Thread(filterlist,command);
-					nextFilter.start();
-					if (!filterlist.hasNext()) {
-						last = nextFilter;
-					}
-					filterlist = (ConcurrentFilter) filterlist.getNext();
-				}
-				
-				if (backgroundMode) {
-					threads.add(last);
+					}	
 				} else {
-					try{
-						if(!last.equals(Thread.currentThread())) {
-							last.join();
+					if(!command.trim().equals("")) {
+						//building the filters list from the command
+						//String[] commandList = command.split("\\s+");
+						String symbol = commandList[commandList.length-1];
+						boolean backgroundMode = false;
+						if (symbol.equals("&")) {
+							backgroundMode = true;
+							int symbolIndex = command.indexOf(symbol);
+							command = command.substring(0, symbolIndex);
 						}
-					} catch(InterruptedException e){}
+						ConcurrentFilter filterlist = ConcurrentCommandBuilder.createFiltersFromCommand(command);
+						Thread last = Thread.currentThread();
+						while (filterlist != null) {
+							Thread nextFilter = new Thread(filterlist,command);
+							String name = nextFilter.getName();
+//							System.out.println("name " +name);
+							nextFilter.start();
+							if (!filterlist.hasNext()) {
+								last = nextFilter;
+							}
+//							System.out.println("last " +last.getName());
+							filterlist = (ConcurrentFilter) filterlist.getNext();
+						}
+						
+						if (backgroundMode) {
+							threads.add(last);
+						} else {
+							try{
+								if(!last.equals(Thread.currentThread())) {
+									last.join();
+								}
+							} catch(InterruptedException e){}
+						}
+					} 
 				}
-			} 
+
+			}
 		}
 		s.close();
 		System.out.print(Message.GOODBYE);

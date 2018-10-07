@@ -23,4 +23,5 @@ public class PwdFilter extends ConcurrentFilter {
 	public boolean isDone() {
 		return output.contains("COMPLETED");
 	}
+
 }
