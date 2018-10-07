@@ -24,8 +24,8 @@ public class ConcurrentREPL {
 			} else if (command.trim().equals("repl_jobs")) {
 				int number = 1;
 				for (Thread t: threads) {
-					if (!t.isInterrupted() && t.isAlive()) {
-						System.out.println("	" + number + ". " + t.getName() + "&");
+					if (t.isAlive()) {
+						System.out.println("\t" + number + ". " + t.getName() + "&");
 					}
 					number++;
 				}
@@ -55,15 +55,13 @@ public class ConcurrentREPL {
 							} else {
 								int killed = killNumber-1;
 								if (threads.get(killed).isAlive()) {
-									threads.get(killed).interrupt();
+									threads.get(killed).stop();
 								}
 							}
 						}
 					}	
 				} else {
 					if(!command.trim().equals("")) {
-						//building the filters list from the command
-						//String[] commandList = command.split("\\s+");
 						String symbol = commandList[commandList.length-1];
 						boolean backgroundMode = false;
 						if (symbol.equals("&")) {
@@ -75,13 +73,10 @@ public class ConcurrentREPL {
 						Thread last = Thread.currentThread();
 						while (filterlist != null) {
 							Thread nextFilter = new Thread(filterlist,command);
-							String name = nextFilter.getName();
-//							System.out.println("name " +name);
 							nextFilter.start();
 							if (!filterlist.hasNext()) {
 								last = nextFilter;
 							}
-//							System.out.println("last " +last.getName());
 							filterlist = (ConcurrentFilter) filterlist.getNext();
 						}
 						
