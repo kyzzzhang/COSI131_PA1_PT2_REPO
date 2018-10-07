@@ -1,6 +1,7 @@
 package cs131.pa1.filter.concurrent;
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import cs131.pa1.filter.Filter;
 
@@ -9,6 +10,7 @@ public abstract class ConcurrentFilter extends Filter implements Runnable{
 	
 	protected LinkedBlockingQueue<String> input;
 	protected LinkedBlockingQueue<String> output;
+	private AtomicBoolean running = new AtomicBoolean(false);
 	
 	
 	@Override
@@ -59,6 +61,7 @@ public abstract class ConcurrentFilter extends Filter implements Runnable{
 	public void run() {
 		process();
 	}
+
 	
 	@Override
 	public boolean isDone() {
