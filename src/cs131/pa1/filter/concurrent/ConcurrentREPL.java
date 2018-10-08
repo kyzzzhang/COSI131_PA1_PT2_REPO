@@ -2,8 +2,10 @@ package cs131.pa1.filter.concurrent;
 
 import cs131.pa1.filter.Message;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Scanner;
+import java.util.Set;
 
 public class ConcurrentREPL {
 
@@ -15,6 +17,7 @@ public class ConcurrentREPL {
 		System.out.print(Message.WELCOME);
 		LinkedList<Thread> threads = new LinkedList<Thread>();
 		String command;
+		Set<String> aliveThread = new HashSet<String>();
 		while(true) {
 			//obtaining the command from the user
 			System.out.print(Message.NEWCOMMAND);
@@ -40,7 +43,10 @@ public class ConcurrentREPL {
 				int number = 1;
 				for (Thread t: threads) {
 					if (t.isAlive()) {
-						System.out.println("\t" + number + ". " + t.getName() + "&");
+						if (!aliveThread.contains(t.getName())) {
+							System.out.println("\t" + number + ". " + t.getName() + "&");
+						}
+						aliveThread.add(t.getName());
 					}
 					number++;
 				}
