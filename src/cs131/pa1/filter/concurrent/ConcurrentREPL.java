@@ -62,19 +62,24 @@ public class ConcurrentREPL {
 	}
 
 	public static void kill(String[] commandList, LinkedList<Thread> threads) {
+		// check if the kill command has a parameter
 		if(commandList.length<2){
 			System.out.printf(Message.REQUIRES_PARAMETER.toString(), "kill");
 		} else {
+			// use this integer to identify the thread to be killed
 			int killNumber = 0;
 			try {
 				killNumber = Integer.parseInt(commandList[1]);
 			} catch (NumberFormatException e) {
 				System.out.printf(Message.INVALID_PARAMETER.toString(), "kill "+commandList[1]);
 			}
+			// check if the kill number is correct
 			if(killNumber !=0 ) {
+				// check the invalid kill number parameter
 				if((killNumber)>threads.size()) {
 					System.out.printf(Message.INVALID_PARAMETER.toString(), "kill "+commandList[1]);
 				} else {
+					// killed the thread 
 					int killed = killNumber-1;
 					if (threads.get(killed).isAlive()) {
 						threads.get(killed).stop();
@@ -85,28 +90,41 @@ public class ConcurrentREPL {
 	}
 			
 	public static void otherCommands(String command, String[] commandList, LinkedList<Thread> threads) {
+		// check if the command is not empty
 		if(!command.trim().equals("")) {
+			// get the & symbol
 			String symbol = commandList[commandList.length-1];
+			// boolean for determining whether to run background mode
 			boolean backgroundMode = false;
+			// if the command has & symbol, then get all commands before &
 			if (symbol.equals("&")) {
 				backgroundMode = true;
 				int symbolIndex = command.indexOf(symbol);
 				command = command.substring(0, symbolIndex);
 			}
+			// build the concurrent filter from command
 			ConcurrentFilter filterlist = ConcurrentCommandBuilder.createFiltersFromCommand(command);
+			// get the current thread
 			Thread last = Thread.currentThread();
 			while (filterlist != null) {
+				// build new thread from the concurrent filter
 				Thread nextFilter = new Thread(filterlist,command);
+				// start the thread
 				nextFilter.start();
+				// if it is the last thread in line, identify it as the last one
 				if (!filterlist.hasNext()) {
 					last = nextFilter;
 				}
 				filterlist = (ConcurrentFilter) filterlist.getNext();
 			}	
+			// if the background mode is on
 			if (backgroundMode) {
+				// add the last one to the thread list
 				threads.add(last);
 			} else {
+				// if the background mode is off
 				try{
+					// join the main thread
 					if(!last.equals(Thread.currentThread())) {
 						last.join();
 					}

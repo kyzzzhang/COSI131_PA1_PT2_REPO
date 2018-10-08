@@ -46,12 +46,12 @@ public abstract class ConcurrentFilter extends Filter implements Runnable{
 	public void process(){
 		while (!isDone()){
 			String line = input.poll();
-//			if(!line.equals("COMPLETED")) {
+			if(line!=null && !line.equals("COMPLETED")) {
 				String processedLine = processLine(line);
 				if (processedLine != null){
 					output.add(processedLine);
 				}
-//			}
+			}	
 		}	
 		//To indicate this thread is completed
 		output.add("COMPLETED");
@@ -67,13 +67,15 @@ public abstract class ConcurrentFilter extends Filter implements Runnable{
 		//For each filter that requires input, an extra line "COMPLETED" is added to the output queue
 		//Only when that line is the head of the input queue, meaning the filter execution is completed
 		//For any other cases, the filter execution is not completed
-		if(input.peek() != null && input.peek().equals("COMPLETED")) {
-			return true;
-		} else {
-//			if(input.peek().equals("COMPLETED")) {
-//				return true;
-//			}
+		
+		//For the case that previous filter has not completed
+		if(input.peek() == null) {
 			return false;
+		} else if (!input.peek().equals("COMPLETED")){
+			//For the case that not all the output from the previous filter has been dealed with
+			return false;
+		} else {
+			return true;
 		}
 	}
 	
