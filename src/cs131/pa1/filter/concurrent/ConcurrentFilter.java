@@ -10,7 +10,6 @@ public abstract class ConcurrentFilter extends Filter implements Runnable{
 	
 	protected LinkedBlockingQueue<String> input;
 	protected LinkedBlockingQueue<String> output;
-	private AtomicBoolean running = new AtomicBoolean(false);
 	
 	
 	@Override

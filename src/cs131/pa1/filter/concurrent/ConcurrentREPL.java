@@ -19,7 +19,22 @@ public class ConcurrentREPL {
 			//obtaining the command from the user
 			System.out.print(Message.NEWCOMMAND);
 			command = s.nextLine();
-			if(command.equals("exit")) {
+			boolean containKillCommand = false;	
+			String[] commandList = command.split("\\s+");
+			if (command.contains("kill")) {
+				int killAtIndex=-1;
+				for(int i = 0; i<commandList.length;i++){
+					if(commandList[i].equals("kill")){
+						containKillCommand = true;
+						killAtIndex = i;
+					}
+				}
+				if(containKillCommand){
+					kill(killAtIndex, commandList, threads);
+				} else {
+					otherCommands(command, commandList, threads);
+				}
+			} else if(command.equals("exit")) {
 				break;
 			} else if (command.trim().equals("repl_jobs")) {
 				int number = 1;
@@ -30,73 +45,65 @@ public class ConcurrentREPL {
 					number++;
 				}
 			} else {
-				String[] commandList = command.split("\\s+");
-				boolean containKillCommand = false;
-				int killAtIndex=-1;
-				for(int i = 0; i<commandList.length;i++){
-					if(commandList[i].equals("kill")){
-						containKillCommand = true;
-						killAtIndex = i;
-					}
-				}
-				if(containKillCommand){
-					if(killAtIndex+1>=commandList.length){
-						System.out.printf(Message.REQUIRES_PARAMETER.toString(), "kill");
-					} else {
-						int killNumber = 0;
-						try {
-							killNumber = Integer.parseInt(commandList[killAtIndex+1]);
-						} catch (NumberFormatException e) {
-							System.out.printf(Message.INVALID_PARAMETER.toString(), "kill "+commandList[killAtIndex+1]);
-						}
-						if(killNumber !=0 ) {
-							if((killNumber)>threads.size()) {
-								System.out.printf(Message.INVALID_PARAMETER.toString(), "kill "+commandList[killAtIndex+1]);
-							} else {
-								int killed = killNumber-1;
-								if (threads.get(killed).isAlive()) {
-									threads.get(killed).stop();
-								}
-							}
-						}
-					}	
-				} else {
-					if(!command.trim().equals("")) {
-						String symbol = commandList[commandList.length-1];
-						boolean backgroundMode = false;
-						if (symbol.equals("&")) {
-							backgroundMode = true;
-							int symbolIndex = command.indexOf(symbol);
-							command = command.substring(0, symbolIndex);
-						}
-						ConcurrentFilter filterlist = ConcurrentCommandBuilder.createFiltersFromCommand(command);
-						Thread last = Thread.currentThread();
-						while (filterlist != null) {
-							Thread nextFilter = new Thread(filterlist,command);
-							nextFilter.start();
-							if (!filterlist.hasNext()) {
-								last = nextFilter;
-							}
-							filterlist = (ConcurrentFilter) filterlist.getNext();
-						}
-						
-						if (backgroundMode) {
-							threads.add(last);
-						} else {
-							try{
-								if(!last.equals(Thread.currentThread())) {
-									last.join();
-								}
-							} catch(InterruptedException e){}
-						}
-					} 
-				}
-
+				otherCommands(command, commandList, threads);
 			}
 		}
 		s.close();
 		System.out.print(Message.GOODBYE);
 	}
 
+	public static void kill(int killAtIndex, String[] commandList, LinkedList<Thread> threads) {
+		if(killAtIndex+1>=commandList.length){
+			System.out.printf(Message.REQUIRES_PARAMETER.toString(), "kill");
+		} else {
+			int killNumber = 0;
+			try {
+				killNumber = Integer.parseInt(commandList[killAtIndex+1]);
+			} catch (NumberFormatException e) {
+				System.out.printf(Message.INVALID_PARAMETER.toString(), "kill "+commandList[killAtIndex+1]);
+			}
+			if(killNumber !=0 ) {
+				if((killNumber)>threads.size()) {
+					System.out.printf(Message.INVALID_PARAMETER.toString(), "kill "+commandList[killAtIndex+1]);
+				} else {
+					int killed = killNumber-1;
+					if (threads.get(killed).isAlive()) {
+						threads.get(killed).stop();
+					}
+				}
+			}	
+		}
+	}
+			
+	public static void otherCommands(String command, String[] commandList, LinkedList<Thread> threads) {
+		if(!command.trim().equals("")) {
+			String symbol = commandList[commandList.length-1];
+			boolean backgroundMode = false;
+			if (symbol.equals("&")) {
+				backgroundMode = true;
+				int symbolIndex = command.indexOf(symbol);
+				command = command.substring(0, symbolIndex);
+			}
+			ConcurrentFilter filterlist = ConcurrentCommandBuilder.createFiltersFromCommand(command);
+			Thread last = Thread.currentThread();
+			while (filterlist != null) {
+				Thread nextFilter = new Thread(filterlist,command);
+				nextFilter.start();
+				if (!filterlist.hasNext()) {
+					last = nextFilter;
+				}
+				filterlist = (ConcurrentFilter) filterlist.getNext();
+			}	
+			if (backgroundMode) {
+				threads.add(last);
+			} else {
+				try{
+					if(!last.equals(Thread.currentThread())) {
+						last.join();
+					}
+				} catch(InterruptedException e){}
+			}
+		} 
+	}
 }
 
