@@ -6,13 +6,15 @@ public class PrintFilter extends ConcurrentFilter {
 	}
 	
 	public void process() {
-		while(!isDone()) {
-			//System.out.println(input.isEmpty());
-			String line = input.peek();
+		while(!isDone()){
+			String line = input.poll();
+			//System.out.println(line);
 			if(line !=null && !line.equals("COMPLETED")) {
-				line = input.poll();
 				processLine(line);
 //				System.out.println(line);
+			} 
+			if(line != null && line.equals("COMPLETED")){
+				break;
 			}
 		}
 	}

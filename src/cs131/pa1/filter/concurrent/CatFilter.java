@@ -43,8 +43,8 @@ public class CatFilter extends ConcurrentFilter{
 			}
 			output.add(processedLine);
 		}
-		reader.close();
 		output.add("COMPLETED");
+		reader.close();	
 	}
 
 	public String processLine(String line) {

@@ -51,7 +51,12 @@ public abstract class ConcurrentFilter extends Filter implements Runnable{
 				if (processedLine != null){
 					output.add(processedLine);
 				}
-			}	
+			} 
+			if(line !=null && line.equals("COMPLETED")){
+				input.add("COMPLETED");
+			}
+
+			//System.out.println(line);
 		}	
 		//To indicate this thread is completed
 		output.add("COMPLETED");
@@ -71,11 +76,11 @@ public abstract class ConcurrentFilter extends Filter implements Runnable{
 		//For the case that previous filter has not completed
 		if(input.peek() == null) {
 			return false;
-		} else if (!input.peek().equals("COMPLETED")){
+		} else if (input.peek().equals("COMPLETED")){
+			return true;
+		} else {
 			//For the case that not all the output from the previous filter has been dealed with
 			return false;
-		} else {
-			return true;
 		}
 	}
 	
